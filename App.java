@@ -60,6 +60,35 @@ public class App { // Appという名前のクラス（プログラムのまと�
                 exchange.sendResponseHeaders(303, -1); // 追加：303で「/」へ移動するよう返します。
                 exchange.close(); // 追加：今回の通信を閉じます。
                 return; // 追加：この分岐の処理を終えます。
+            } else if (path.equals("/done") && method.equals("GET")) { // ★追加：完了リンクへのアクセスを処理します。
+                String query = exchange.getRequestURI().getQuery(); // ★追加：URLのid部分を受け取ります。
+                if (query != null && query.startsWith("id=") && query.length() > 3) { // ★追加：idが付いているか確かめます。
+                    try { // ★追加：数字に変えられるか試します。
+                        int id = Integer.parseInt(query.substring(3)); // ★追加：idの文字を数に変えます。
+                        for (Todo todo : todos) { // ★追加：Todoを1件ずつ確認します。
+                            if (todo.getId() == id) { // ★追加：idが一致するか確かめます。
+                                todo.setDone(true); // ★追加：一致したTodoを完了にします。
+                                break; // ★追加：一致したので繰り返しを抜けます。
+                            } // ★追加：idが一致したときの処理を終えます。
+                        } // ★追加：Todoを1件ずつ見る処理を終えます。
+                    } catch (NumberFormatException e) { // ★追加：idが数字でない場合を受け止めます。
+                    } // ★追加：数字でない場合は何も変えません。
+                } // ★追加：idの確認を終えます。
+                exchange.getResponseHeaders().set("Location", "/"); // ★追加：戻る場所を「/」に指定します。
+                exchange.sendResponseHeaders(303, -1); // ★追加：303で「/」へ移動するよう返します。
+                return; // ★追加：完了の処理を終えます。
+            } else if (path.equals("/delete") && method.equals("GET")) { // ★追加：削除リンクへのアクセスを処理します。
+                String query = exchange.getRequestURI().getQuery(); // ★追加：URLのid部分を受け取ります。
+                if (query != null && query.startsWith("id=") && query.length() > 3) { // ★追加：idが付いているか確かめます。
+                    try { // ★追加：数字に変えられるか試します。
+                        int id = Integer.parseInt(query.substring(3)); // ★追加：idの文字を数に変えます。
+                        todos.removeIf(todo -> todo.getId() == id); // ★追加：idが一致するTodoをリストから取り除きます。
+                    } catch (NumberFormatException e) { // ★追加：idが数字でない場合を受け止めます。
+                    } // ★追加：数字でない場合は何も変えません。
+                } // ★追加：idの確認を終えます。
+                exchange.getResponseHeaders().set("Location", "/"); // ★追加：戻る場所を「/」に指定します。
+                exchange.sendResponseHeaders(303, -1); // ★追加：303で「/」へ移動するよう返します。
+                return; // ★追加：削除の処理を終えます。
             } else if (path.equals("/")) { // 追加：「/」なら入力フォームとTodo一覧を表示します。
                 String html = "<form method='post' action='/add'><input name='todo'><button>追加</button></form><ul>"; // 追加：入力フォームとHTMLの箇条書きを始めます。
                 for (Todo todo : todos) { // ★変更：Todoを1件ずつ取り出します。
@@ -67,7 +96,7 @@ public class App { // Appという名前のクラス（プログラムのまと�
                     if (todo.isDone()) { // ★変更：終わったTodoかを確かめます。
                         mark = " ✔"; // ★変更：終わったTodoにだけ印を付けます。
                     }
-                    html += "<li>" + todo.getTitle() + mark + "</li>"; // ★変更：titleと印をHTMLの項目として足します。
+                    html += "<li>" + todo.getTitle() + mark + " <a href='/done?id=" + todo.getId() + "'>完了</a> <a href='/delete?id=" + todo.getId() + "'>削除</a></li>"; // ★追加：Todoのidを入れた完了と削除のリンクを足します。
                 } // 追加：繰り返しを終えます。
                 html += "</ul>"; // 追加：HTMLの箇条書きを閉じます。
                 message = html; // 追加：組み立てたHTMLを返す内容にします。
